@@ -1,0 +1,713 @@
+#!/usr/bin/env python
+
+import time
+import random
+import pprint
+import datetime
+import re
+
+
+__author__ = "Paulo Cezar, Fabricio Sarreta"
+__email__  = "paulorpc@gmail.com, fa.sarreta@gmail.com"
+__status__ = "Production"
+
+
+##################################################################################################################
+###   AO FINALIZAR A EXECUCAO DO PROGRAMA PELA PRIMEIRA VEZ, SERA CRIADO DOIS ARQUIVOS NA RAIZ DO DIRETORIO    ###
+###   UM ARQUIVO CONTEM OS RESULTADOS OBTIDOS E O OUTRO CONTEM AS CONFIGURACOES E VETORES GERADOS PARA         ###
+###   EXECUTAR O TESTE NOVAMENTE, MANTENDO AS MESMAS CONDICOES ANTERIORES.                                      ###
+##################################################################################################################
+
+
+#Nomes dos algoritimos de ordenacao
+nomes_alg = ["Bublesort", "Heapsort", "Quicksort", "Radixsort"]
+
+#Nomes dos tipos de operacao, ou seja, ordenacao de vetores alearotios, ordenados ou inversamente ordenados.
+nomes_tipoOp = ["Vetores Aleatorios", "Vetores Ordenados (Melhor Caso)", "Vetores Ordenados Invertidamente (Pior Caso)"]
+
+
+N = [10000, 50000, 100000, 200000, 400000, 600000, 1000000, 5000000]     #Qtde de itens 'N[i]' para analise dos algoritmos de ordenacao
+T = len(N)                                                               #tamanho do vetor N para percorrer e executar a analise para cada qtde N[i]
+R = 0                                                                    #Numero de repeticoes dos teste para calcular uma media de tempos
+
+
+# Devido a lentidao do algoritmo bubble para grandes vetores, e bom estabelecer uma parada.
+# Um vetor de 400.000 itens num i3 c/ 4GB RAM pode demorar em torno de 12h para ordenacao.
+paradaBubble = N[3]
+
+######## CONDICAO PARA DEBBUG ##############
+#N = [5, 15, 20, 25, 30, 35, 40, 201]
+#paradaBubble = N[T-1]
+######## CONDICAO PARA DEBBUG ##############
+
+
+#Vetores para armazenar marcacoes dos tempos para cada 'N[i]' em todas as repeticoes 'R'
+tempos_bubble, tempos_heap, tempos_quick, tempos_radix = [], [], [], []
+
+#Vetores para armazenar as somatorias de tempos das repeticoes 'R' para auxiliar no calculo da media
+somatoria_bubble, somatoria_heap, somatoria_quick, somatoria_radix = [], [], [], []
+
+#Vetores para armazenar as medias obtidas para cada 'N[i]'
+medias_bubble, medias_heap, medias_quick, medias_radix = [], [], [], []
+
+# Vetor de referencia para todos algoritmos de ordenacao
+padrao_vet = []
+
+
+exec_alg = [False] * len(nomes_alg)     # Boolean para identificar quais algoritimos devem ser executados
+continue_prg = False                    # Boolean para continuar ou nao o programa
+
+
+def optimizedBubbleSort(v):
+    '''
+    Metodo de ordenacao utilizando algoritmo BUBBLESORT
+    :param v: Vetor para ordenacao
+    :return: Vetor ordenado
+    '''
+
+    update = True
+    n = len(v)
+
+    while update is True and n > 1:
+
+        update = False
+        for i in range(n-1):
+
+            if v[i] > v[i + 1]:
+                v[i], v[i + 1] = v[i + 1], v[i]
+                update = True
+
+        n -= 1
+
+    return v
+
+
+
+def heapsort(v):
+    '''
+    Metodo de ordenacao utilizando algoritmo HEAPSORT
+    Obs: Este metodo ordena no proprio vetor. Ele altera a lista.
+    :param v: Vetor para ordenacao
+    :return: Vetor ordenado
+    '''
+
+    # in pseudo-code, heapify only called once, so inline it here
+    for start in range((len(v) - 2) / 2, -1, -1):
+        siftdown(v, start, len(v) - 1)
+
+    for end in range(len(v) - 1, 0, -1):
+
+        v[end], v[0] = v[0], v[end]
+        siftdown(v, 0, end - 1)
+
+    return v
+
+def siftdown(v, start, end):
+
+    root = start
+    while True:
+        child = root * 2 + 1
+
+        if child > end: break
+        if child + 1 <= end and v[child] < v[child + 1]: child += 1
+
+        if v[root] < v[child]:
+            v[root], v[child] = v[child], v[root]
+            root = child
+
+        else:
+            break
+
+
+
+def quicksort(v):
+    '''
+    Metodo de ordenacao utilizando algoritmo QUICKSORT
+    Obs: Este metodo ordena no proprio vetor. Ele altera a lista.
+    :param v: Vetor para ordenacao
+    :return: Vetor ordenado
+    '''
+
+    if len(v) > 1:
+
+        pivot = random.randrange(len(v))
+        elements = v[:pivot] + v[pivot + 1:]
+
+        left = [element for element in elements if element < v[pivot]]
+        right = [element for element in elements if element >= v[pivot]]
+
+        return quicksort(left) + [v[pivot]] + quicksort(right)
+
+    return v
+
+
+
+def radixsort(v):
+    '''
+    Metodo de ordenacao utilizando algoritmo RADIXSORT
+    Obs: Este metodo ordena no proprio vetor. Ele altera a lista.
+    :param v: Vetor para ordenacao
+    :return: Vetor ordenado
+    '''
+
+    RADIX = 10
+    maxLength = False
+    tmp, placement = -1, 1
+
+    while not maxLength:
+
+        maxLength = True
+
+        # declare and initialize buckets
+        buckets = [list() for _ in range(RADIX)]
+
+        # split v between lists
+        for i in v:
+
+            tmp = i // placement
+            # print ("i is " , i)
+            # print ("placement is " , placement)
+            # print ("tmp is ", tmp)
+            # print ("tmp % RADIX is ", tmp % RADIX)
+            buckets[tmp % RADIX].append(i)
+
+            if maxLength and tmp > 0:
+                maxLength = False
+
+        # empty lists into v array
+        a = 0
+
+        for b in range(RADIX):
+            buck = buckets[b]
+
+            for i in buck:
+                v[a] = i
+                a += 1
+
+        # move to next digit
+        placement *= RADIX
+
+    return v
+
+
+
+def dataHora():
+    '''
+    Metodo para retornar data e hora no em formato padrao para arquivo
+    :return: String data-hora
+    '''
+    now = datetime.datetime.now()
+    return now.strftime("%d-%m-%Y_%H-%M")
+
+
+
+def conversorTempo(t):
+    '''
+    Metodo para converter o tempo de segundos para minutos ou horas, se necessario.
+    :param t: Tempo em segundos
+    :return: (String) Tempo em segundos, minutos ou horas
+    '''
+
+    t = float(t)
+    novoTempo = 0
+
+    if (t > 3600):
+        novoTempo = t / 3600
+        strTempo = "%.2f h" % novoTempo
+
+    elif (t > 60 and t < 3600):
+        novoTempo = t / 60
+        strTempo = "%.2f min" % novoTempo
+
+    else:
+        novoTempo = t
+        strTempo = "%.2f s" % novoTempo
+
+    return strTempo
+
+
+
+def printTempos():
+    '''
+    Metodo para impressao das marcacoes de tempos dos algoritmos de ordenacao para 'N' itens de 'T' e 'R' repeticoes.
+    '''
+
+    print "\n\n** Resumo dos tempos de execucao dos algoritmos para ordenar os itens do vetor 'N[i]' **"
+
+    tempos = [tempos_bubble, tempos_heap, tempos_quick, tempos_radix]
+
+    for i in range( len(tempos) ):
+        # Exibr apenas os itens que possuem marcacoes de tempo
+        if tempos[i]:
+            print "\n%s: " % (nomes_alg[i])
+            pprint.pprint(tempos[i])
+
+
+
+def printSomatoria():
+    '''
+    Metodo de impressao da somatoria das marcacoes de tempo para calculo da media
+    '''
+
+    print "\n\n** Resumo dos somatorias de tempos de execucao dos algoritmos para ordenar os itens do vetor 'N[i]' **"
+
+    somatorias = [somatoria_bubble, somatoria_heap, somatoria_quick, somatoria_radix]
+
+    for i in range ( len(somatorias) ):
+        if somatorias[i]:
+            print "%s: " % (nomes_alg[i]), somatorias[i]
+
+
+
+def printMedias():
+    '''
+    Metodo de impressao das medias de tempo
+    '''
+
+    print "\n\n** Resumo das medias de tempos de execucao dos algoritmos para ordenar os itens do vetor 'N[i]' **"
+
+    medias = [medias_bubble, medias_heap, medias_quick, medias_radix]
+
+    for i in range ( len(medias) ):
+        if medias[i]:
+            print "%s: \t" % (nomes_alg[i]), medias[i]
+
+
+
+def printResumo(boolPrintTempos, boolPrintMedias):
+    '''
+    Imprime resumo da operacao
+    '''
+
+    if boolPrintTempos: printTempos()
+    if boolPrintMedias: printMedias()
+
+    print "\n\n>> Numero de Repeticoes: \t\t\t" + str(R)
+    print ">> Qtde de Itens do vetor N[" + str(len(N)) + "]: \t" + str(N)
+    print ">> Tipo do vetor para Ordenacao: \t" + str(nomes_tipoOp[tipoOp-1])
+    print ">> Algoritmos Selecionados: \t\t" + str(exec_alg)
+
+
+
+def gravaResultado():
+    '''
+    Metodo para armazenamento dos resultados obtidos
+    '''
+
+    medias = [medias_bubble, medias_heap, medias_quick,medias_radix]
+
+    try:
+        fileName = "log_Resultados_" + dataHora() + ".txt"
+        file = open(fileName, "w")
+
+    except IOError:
+        print "\nNao foi possivel criar o arquivo de resultados: ", filename
+
+    else:
+        print >> file, "**************************************************************************"
+        print >> file, "*******  LOG DE MEDIAS RESULTANTES PARA DETERMINADAS REPETICOES  *********"
+        print >> file, "**************************************************************************"
+
+        print >> file, "\n\n>> Qtde de Repeticoes: \t\t(" + str(R) + ")"
+        print >> file, ">> Tipo de vetor ordenado: \t(" + str(tipoOp) + ") " + nomes_tipoOp[tipoOp-1]
+        print >> file, ">> Qtde Itens para Ordenacao: \tN[" + str(T) + "] = \t" + str(N)
+
+        print >> file, "\n\n--------------------------------------------------------------------------\n\n"
+
+        for i in range( len(medias) ):
+            print >> file, "%s: " % (nomes_alg[i])
+            print >> file, medias[i]
+            print >> file, ""
+
+
+        file.close()
+
+        print "\n** Arquivo gravado com sucesso: %s **" % fileName
+
+
+
+def gravaArquivoVetores(vetores):
+    '''
+    Metodo para armazenar todos os tipos de vetores gerados em um arquivo para reuso em novos testes
+    Dependendo do tamanho dos vetores gerados, este arquivo pode ficar muito grande. Ver metodo 'gravaVetor()'
+    :param vetores: Vetor com todos os demais vetores gerados
+    '''
+
+    try:
+        fileName = "vetoresGerados_todos_" + dataHora() + ".txt"
+        file = open(fileName, "w")
+
+    except IOError:
+        print "\n\nATENCAO: "
+        print "\nNao foi possivel criar o arquivo de vetores/configuracao: ", filename
+        print "Isto significa que nao sera possivel reusar os vetores e as configuracoes desta analise em um novo teste"
+
+    else:
+        print >> file, "**************************************************************************"
+        print >> file, "*************  VETORES GERADOS PARA RECUPERACAO E ORDENACAO  *************"
+        print >> file, "**************************************************************************"
+        print >> file, "\n\n>> Qtde de Repeticoes \t\t(" + str(R) + ")"
+        print >> file, ">> Algoritmos Executados: \t(" + str(exec_alg) + ") " + str(nomes_alg)
+
+        for j in range ( len(vetores) ):
+            print >> file, "\n\n--------------------------------------------------------------------------"
+            print >> file, ">> Tipo de vetor: " + "(" + str(j+1) + ")" + nomes_tipoOp[j]
+            print >> file, "--------------------------------------------------------------------------"
+
+            for i in range ( len(vetores[j]) ):
+                print >> file, "\n>> N[" + str(i) + "] = (" + str(N[i]) + ")"
+                print >> file, ">> " + str((vetores[j])[i])
+
+        file.close()
+
+        print "\n** Arquivo gravado com sucesso: %s **" % fileName
+
+
+
+def gravaArquivoVetor(vetores):
+    '''
+    Metodo para armazenar o tipo de vetor (operacao) escolhido pelo usuario em um arquivo para reuso em novos testes
+    :param vetores: Vetor com todos os demais vetores gerados
+    '''
+
+    global continue_prg
+
+    try:
+        if tipoOp == 1:   fileName = "vetoresGerados_aleatorio_" + dataHora() + ".txt"
+        elif tipoOp == 2: fileName = "vetoresGerados_ordenado_" + dataHora() + ".txt"
+        elif tipoOp == 3: fileName = "vetoresGerados_inverso_" + dataHora() + ".txt"
+
+        file = open(fileName, "w")
+
+    except IOError:
+        print "\n\nATENCAO: "
+        print "\nNao foi possivel criar o arquivo de vetores/configuracao: ", filename
+        print "Isto significa que nao sera possivel reusar os vetores e as configuracoes desta analise em um novo teste"
+
+    else:
+        print >> file, "**************************************************************************"
+        print >> file, "*************  VETORES GERADOS PARA RECUPERACAO E ORDENACAO  *************"
+        print >> file, "**************************************************************************"
+
+        print >> file, "\n\n>> Qtde de Repeticoes: \t\t(" + str(R) + ")"
+        print >> file, ">> Tipo de vetor: \t\t(" + str(tipoOp)  + ") " + nomes_tipoOp[tipoOp-1]
+        print >> file, ">> Algoritmos Executados: \t(" + str(exec_alg) + ") " + str(nomes_alg)
+
+        print >> file, "\n\n--------------------------------------------------------------------------\n"
+
+        for i in range(len(vetores[tipoOp-1])):
+            print >> file, "\n>> N[" + str(i) + "] = (" + str(N[i]) + ")"
+            print >> file, ">> " + str((vetores[tipoOp-1])[i])
+
+        file.close()
+
+        print "\n** Arquivo gravado com sucesso: %s **" % fileName
+
+
+
+def carregaConfiguracaoManual():
+    '''
+    Metodo para entrar com os dados de teste manualmente. Esse metodo deve ser chamado quando for iniciar um novo teste
+    :return: R, tipoOp
+    '''
+
+    global R, exec_alg, continue_prg
+    aux = "n"
+
+    # Escolha de quais algoritipos deseja analisar
+    print ""
+    for i in range(0, len(nomes_alg)):
+        aux = raw_input("Executar o " + nomes_alg[i].upper() + "? [S]im ou [N]ao: ")
+        if (aux == "s" or aux == "S"):
+            exec_alg[i] = True
+            continue_prg = True
+
+    # Define o numero de repeticoes do teste para realizar uma media
+    while R < 1:
+        R = int(raw_input("\nQuantas vezes deseja repetir o teste?: "))
+
+    # Define com qual tipo de vetor sera realizado o teste (Aleatorio, Ordenado (Melhor Caso), Invertido (Pior Caso)
+    # Nao fazemos os 3 em sequencia automaticamente devido ao tempo de espera ser grande, principalmente executando o
+    # algoritmo bubblesort.
+    tipoOp = 0
+    while tipoOp < 1 or tipoOp > 3:
+        tipoOp = int(raw_input("\nTipo de Operacao:\n"
+                               "[1] " + nomes_tipoOp[0] + "\n"
+                               "[2] " + nomes_tipoOp[1] + "\n"
+                               "[3] " + nomes_tipoOp[2] + "\n"
+                               "\nDigite o numero do item da operacao: "))
+
+    return R, tipoOp
+
+
+
+def carregaArquivoConfiguracao():
+    '''
+    Metodo para carregar as informacoes do arquivo de log gerado pelo programa para poder realizar novos testes
+    baseado nos mesmos parametros utilizados anteriormente.
+    :return: R, tipoOp, vetoresCarregados, N
+    '''
+
+    global R, T, exec_alg, continue_prg
+    algs, vetorGerado, vetoresCarregados, N = [], [], [], []
+
+
+    try:
+        filename = raw_input("Digite o nome do arquivo de configuracao (vetoresGerados) que deseja carregar : ")
+        file = open(filename, "r")
+
+    except IOError:
+        print "\n\nATENCAO: "
+        print '\nNao foi possivel abrir o arquivo de vetores/configuracao: ', filename
+        print "Encerrando programa..."
+        continue_prg == False
+        return 0, 0, [], []
+
+    else:
+        for line in file:
+            if line.startswith('>>'):
+                if line.startswith('>> Qtde de Repeticoes: '):
+                    R = int(re.search(r'\((.*)\)', line).group(1))
+
+                if line.startswith('>> Tipo de vetor: '):
+                    tipoOp = int(re.search(r'\((.*)\)', line[:39]).group(1))
+
+                if line.startswith('>> Algoritmos Executados: '):
+                    algs = re.search(r'\((.*)\)', line).group(1)
+                    algs = algs[1:-1].split(', ')
+
+                if line.startswith('>> N['):
+                    N.append( int(re.search(r'\((.*)\)', line).group(1)) )
+
+                if line.startswith('>> ['):
+                    vetorGerado = line[4:-2].split(', ')
+                    vetorGerado = [int(i) for i in vetorGerado]
+                    vetoresCarregados.append(vetorGerado)
+
+        file.close()
+
+        T = len(N)
+
+        # Verifica quais algoritipos serao analisados
+        for i in range (len(algs)):
+            if algs[i] == 'True':
+                exec_alg[i] = True
+                continue_prg = True
+
+        #print numRepeticoes
+        #print tipoOperacao
+        #print qtde_N
+        #print vetores
+
+        return R, tipoOp, vetoresCarregados, N
+
+
+
+def geraVetores(vetor, tipoOp):
+    '''
+    Gera os vetores (Aleatorio, Melhor Caso, Pior Caso) para ordenacao atraves dos diferentes algoritmos para analise.
+    :param vetor: Vetor com o numero de itens para cada marcacao de tempo. Ex: [50, 100, 200, 400]
+    :return: vetorGerado
+    '''
+
+    T = len(vetor)
+    vetorAleatorio, vetorMelhorCaso, vetorPiorCaso = [], [], []
+
+    for i in range(0, T):
+
+        vetorAleatorio.append([])
+        vetorMelhorCaso.append([])
+        vetorPiorCaso.append([])
+
+        #Aleatorio
+        for x in range(0, N[i]):
+            vetorAleatorio[i].append(random.randint(0, N[i]))
+
+        #Melhor caso
+        for x in range(0, N[i]):
+            vetorMelhorCaso[i].append(x)
+
+        #Pior caso
+        for x in range(N[i]-1, -1, -1):
+            vetorPiorCaso[i].append(x)
+
+
+    vetores = [vetorAleatorio, vetorMelhorCaso, vetorPiorCaso]
+    gravaArquivoVetor(vetores)
+    #gravaArquivoVetores(vetores)
+
+    if   tipoOp == 1: return vetores[0]
+    elif tipoOp == 2: return vetores[1]
+    elif tipoOp == 3: return vetores[2]
+    else:
+        return []
+
+
+
+def calculaMedias():
+    '''
+    Metodo para calcular os tempos medios de 'R' repeticoes para cada 'N' executado por cada algoritmo
+    '''
+
+    global somatoria_bubble,somatoria_heap, somatoria_quick, somatoria_radix
+    global medias_bubble, medias_heap, medias_quick, medias_radix
+
+    # Faz a somatoria dos tempos de todas repeticoes realizadas, para cada algoritmo, para poder realizar a media
+
+
+    # Esta e uma condicao especial para o Bubblesort devido a lentidao para ordenacao de vetores muito grandes.
+    # A qtde de itens da somatoria/media do BS pode ser menor que a qtde de itens do vetor N devido a condicao
+    # inserida na funcao principal onde faz a marcacao de tempo. Tambem e preciso essa condicao especial para
+    # o calculo da media no 'for' abaixo.
+    if exec_alg[0]:
+        auxT = len(tempos_bubble[0])
+        for i in range(auxT):
+            col = i
+            somatoria_bubble.append(sum(row[col] for row in tempos_bubble))
+
+
+    for i in range(T):
+        col = i
+        if exec_alg[1]: somatoria_heap.append(sum(row[col] for row in tempos_heap))
+        if exec_alg[2]: somatoria_quick.append(sum(row[col] for row in tempos_quick))
+        if exec_alg[3]: somatoria_radix.append(sum(row[col] for row in tempos_radix))
+
+    # Converte F em float
+    r = float(R)
+
+    if r >= 1:
+
+        # Esta e uma condicao especial para o Bubblesort devido a lentidao para ordenacao de vetores muito grandes.
+        # A qtde de itens da somatoria/media do BS pode ser menor que a qtde de itens do vetor N devido a condicao
+        # inserida na funcao principal onde faz a marcacao de tempo.
+        if exec_alg[0]:
+            for i in range(auxT):
+                medias_bubble.append(somatoria_bubble[i] / r)
+
+
+        # Enconatra a media dos tempos
+        for i in range(0, T):
+            if exec_alg[1]: medias_heap.append(somatoria_heap[i] / r)
+            if exec_alg[2]: medias_quick.append(somatoria_quick[i] / r)
+            if exec_alg[3]: medias_radix.append(somatoria_radix[i] / r)
+
+    else:
+        print "Impossivel calcular tempos medios"
+
+
+
+
+
+#
+# INICIO DO PROGRAMA
+#
+
+print "\n\n**************************************************************************"
+print "*******           BENCHMARK DE ALGORITIMOS DE ORDENACAO            *******"
+print "**************************************************************************"
+
+# Define com qual tipo de vetor sera realizado o teste (Aleatorio, Ordenado (Melhor Caso), Invertido (Pior Caso)
+# Nao fazemos os 3 em sequencia automaticamente devido ao tempo de espera ser grande, principalmente executando o
+# algoritmo bubblesort.
+
+tipoanalise = 0
+while tipoanalise < 1 or tipoanalise > 2:
+    tipoanalise = int(raw_input("\n[1] Carregar configuracao do arquivo (Continuar analise) \n"
+                                  "[2] Nova Analise\n"
+                                  "\nDigite o numero do item da operacao: "))
+
+
+if tipoanalise == 1:
+    R, tipoOp, vetores, N = carregaArquivoConfiguracao()
+
+else:
+    R, tipoOp = carregaConfiguracaoManual()
+    vetores = geraVetores(N, tipoOp)
+
+
+# Finaliza o programa caso nao tenha sido escolhido algum algoritmo
+if (continue_prg == False): raise SystemExit
+
+
+printResumo(False, False)
+
+#Garante que o numero de Repeticao nao e menor ou igual a 0 (por engano)
+if R <= 0:
+    R = 1
+
+#Iniciar marcacao do calculo de tempo de execucao do programa
+inicioTotal = time.time()
+
+#Ordenacao e Calculo dos tempos individuais
+for j in range(0, R):
+    print "\n[ Repeticao %d ]\n" % (j+1)
+
+    if exec_alg[0]: tempos_bubble.append([])
+    if exec_alg[1]: tempos_heap.append([])
+    if exec_alg[2]: tempos_quick.append([])
+    if exec_alg[3]: tempos_radix.append([])
+
+    for i in range(0, T):
+        print "%d. N = %d" % (i+1, N[i])
+
+        padrao_vet = vetores[i]
+
+        bubble_vet = padrao_vet
+        heap_vet = padrao_vet
+        quick_vet = padrao_vet
+        radix_vet = padrao_vet
+
+        #BUBBLESORT - 400.000 itens demora em torno de 12h num i3 c/ 4GB RAM
+        if exec_alg[0] and N[i] <= paradaBubble:
+            inicio = time.time()
+            optimizedBubbleSort(bubble_vet)
+            fim = time.time()
+            tempo = fim-inicio
+            tempos_bubble[j].append(tempo)
+            print "a) %s: %f" % (nomes_alg[0], tempo)
+
+
+        #HEAPSORT
+        if exec_alg[1]:
+            inicio = time.time()
+            heapsort(heap_vet)
+            fim = time.time()
+            tempo = fim-inicio
+            tempos_heap[j].append(tempo)
+            print "b) %s:  %f" % (nomes_alg[1], tempo)
+
+
+        #QUICKSORT
+        if exec_alg[2]:
+            inicio = time.time()
+            quicksort(quick_vet)
+            fim = time.time()
+            tempo = fim-inicio
+            tempos_quick[j].append(tempo)
+            print "c) %s: %f" % (nomes_alg[2], tempo)
+
+
+        #RADIXSORT
+        if exec_alg[3]:
+            inicio = time.time()
+            radixsort(radix_vet)
+            fim = time.time()
+            tempo = fim-inicio
+            tempos_radix[j].append(tempo)
+            print "d) %s: %f" % (nomes_alg[3], tempo)
+
+        print ""
+
+
+# Encerra marcacao de tempo do programa
+fimTotal = time.time()
+tempoTotal = fimTotal - inicioTotal
+
+# Calcula resultados, grava em arquivo e imprime o resumo
+calculaMedias()
+gravaResultado()
+printResumo(True, True)
+
+tempo = conversorTempo(tempoTotal)
+print "\n\nPrograma finalizado com sucesso!"
+print "\n\nTEMPO DE EXECUCAO DO PROGRAMA: %s" % tempo
