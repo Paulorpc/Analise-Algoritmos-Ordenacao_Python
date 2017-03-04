@@ -12,11 +12,10 @@ __email__  = "paulorpc@gmail.com, fa.sarreta@gmail.com"
 __status__ = "Production"
 
 
-##################################################################################################################
-###   AO FINALIZAR A EXECUCAO DO PROGRAMA PELA PRIMEIRA VEZ, SERA CRIADO DOIS ARQUIVOS NA RAIZ DO DIRETORIO    ###
-###   UM ARQUIVO CONTEM OS RESULTADOS OBTIDOS E O OUTRO CONTEM AS CONFIGURACOES E VETORES GERADOS PARA         ###
-###   EXECUTAR O TESTE NOVAMENTE, MANTENDO AS MESMAS CONDICOES ANTERIORES.                                      ###
-##################################################################################################################
+#######################################################################################################################
+###   SERA CRIADO DOIS ARQUIVOS NA RAIZ DO DIRETORIO UM ARQUIVO CONTEM OS RESULTADOS OBTIDOS E O OUTRO CONTEM       ###
+###   AS CONFIGURACOES E VETORES GERADOS PARA EXECUTAR O TESTE NOVAMENTE, MANTENDO AS MESMAS CONDICOES ANTERIORES   ###
+#######################################################################################################################
 
 
 #Nomes dos algoritimos de ordenacao
@@ -25,21 +24,26 @@ nomes_alg = ["Bublesort", "Heapsort", "Quicksort", "Radixsort"]
 #Nomes dos tipos de operacao, ou seja, ordenacao de vetores alearotios, ordenados ou inversamente ordenados.
 nomes_tipoOp = ["Vetores Aleatorios", "Vetores Ordenados (Melhor Caso)", "Vetores Ordenados Invertidamente (Pior Caso)"]
 
-
+# N: 10000, 50000, 100000, 200000, 400000, 600000, 1000000, 5000000
 N = [10000, 50000, 100000, 200000, 400000, 600000, 1000000, 5000000]     #Qtde de itens 'N[i]' para analise dos algoritmos de ordenacao
 T = len(N)                                                               #tamanho do vetor N para percorrer e executar a analise para cada qtde N[i]
 R = 0                                                                    #Numero de repeticoes dos teste para calcular uma media de tempos
 
-
-# Devido a lentidao do algoritmo bubble para grandes vetores, e bom estabelecer uma parada.
+# Devido a lentidao do algoritmo bubble para grandes vetores, e bom estabelecer uma parada, ou seja nao sera executado
+# o bubblesort para 'N[i] > paradaBubble'
 # Um vetor de 400.000 itens num i3 c/ 4GB RAM pode demorar em torno de 12h para ordenacao.
-paradaBubble = N[3]
+paradaBubble = 200000
 
-######## CONDICAO PARA DEBBUG ##############
-#N = [5, 15, 20, 25, 30, 35, 40, 201]
-#paradaBubble = N[T-1]
-######## CONDICAO PARA DEBBUG ##############
 
+############## CONDICAO PARA DEBBUG ####################
+
+DEBUG = False
+
+if DEBUG is True:
+    N = [5, 15, 20, 25, 30, 35, 150, 200]
+    paradaBubble = 140
+
+############## CONDICAO PARA DEBBUG ####################
 
 #Vetores para armazenar marcacoes dos tempos para cada 'N[i]' em todas as repeticoes 'R'
 tempos_bubble, tempos_heap, tempos_quick, tempos_radix = [], [], [], []
@@ -297,7 +301,10 @@ def gravaResultado():
     medias = [medias_bubble, medias_heap, medias_quick,medias_radix]
 
     try:
-        fileName = "log_Resultados_" + dataHora() + ".txt"
+        if tipoOp == 1:   fileName = "log_Resultados_aleatorio_" + dataHora() + ".txt"
+        elif tipoOp == 2: fileName = "log_Resultados_ordenado_" + dataHora() + ".txt"
+        elif tipoOp == 3: fileName = "log_Resultados_inverso_" + dataHora() + ".txt"
+
         file = open(fileName, "w")
 
     except IOError:
@@ -402,6 +409,7 @@ def gravaArquivoVetor(vetores):
         file.close()
 
         print "\n** Arquivo gravado com sucesso: %s **" % fileName
+
 
 
 
@@ -596,8 +604,6 @@ def calculaMedias():
 
 
 
-
-
 #
 # INICIO DO PROGRAMA
 #
@@ -611,18 +617,23 @@ print "*************************************************************************
 # algoritmo bubblesort.
 
 tipoanalise = 0
-while tipoanalise < 1 or tipoanalise > 2:
-    tipoanalise = int(raw_input("\n[1] Carregar configuracao do arquivo (Continuar analise) \n"
-                                  "[2] Nova Analise\n"
+while tipoanalise < 1 or tipoanalise > 3:
+    tipoanalise = int(raw_input("\n[1] Nova Analise\n"
+                                  "[2] Gerar arquivo de vetores/configuracao\n"
+                                  "[3] Carregar configuracao do arquivo (Continuar analise) \n"
+
                                   "\nDigite o numero do item da operacao: "))
 
 
-if tipoanalise == 1:
-    R, tipoOp, vetores, N = carregaArquivoConfiguracao()
-
-else:
+if tipoanalise == 1 or tipoanalise == 2:
     R, tipoOp = carregaConfiguracaoManual()
     vetores = geraVetores(N, tipoOp)
+
+    if tipoanalise == 2:
+        continue_prg = False
+
+elif tipoanalise == 3:
+    R, tipoOp, vetores, N = carregaArquivoConfiguracao()
 
 
 # Finaliza o programa caso nao tenha sido escolhido algum algoritmo
@@ -657,14 +668,22 @@ for j in range(0, R):
         quick_vet = padrao_vet
         radix_vet = padrao_vet
 
+
+
         #BUBBLESORT - 400.000 itens demora em torno de 12h num i3 c/ 4GB RAM
-        if exec_alg[0] and N[i] <= paradaBubble:
-            inicio = time.time()
-            optimizedBubbleSort(bubble_vet)
-            fim = time.time()
-            tempo = fim-inicio
-            tempos_bubble[j].append(tempo)
-            print "a) %s: %f" % (nomes_alg[0], tempo)
+        if exec_alg[0]:
+
+            # Apenas uma condicao para permitir um teste individual com valores grandes
+            if len(N) == 1:
+                paradaBubble = N[0]
+
+            if N[i] <= paradaBubble:
+                inicio = time.time()
+                optimizedBubbleSort(bubble_vet)
+                fim = time.time()
+                tempo = fim-inicio
+                tempos_bubble[j].append(tempo)
+                print "a) %s: %f" % (nomes_alg[0], tempo)
 
 
         #HEAPSORT
