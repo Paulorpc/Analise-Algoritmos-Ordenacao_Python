@@ -661,14 +661,10 @@ for j in range(0, R):
     for i in range(0, T):
         print "%d. N = %d" % (i+1, N[i])
 
-        padrao_vet = vetores[i]
-
-        bubble_vet = padrao_vet
-        heap_vet = padrao_vet
-        quick_vet = padrao_vet
-        radix_vet = padrao_vet
-
-
+        if exec_alg[0]: bubble_vet = vetores[i][:]
+        if exec_alg[1]: heap_vet   = vetores[i][:]
+        if exec_alg[2]: quick_vet  = vetores[i][:]
+        if exec_alg[3]: radix_vet  = vetores[i][:]
 
         #BUBBLESORT - 400.000 itens demora em torno de 12h num i3 c/ 4GB RAM
         if exec_alg[0]:
