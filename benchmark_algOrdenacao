@@ -207,27 +207,14 @@ def dataHora():
 
 def conversorTempo(t):
     '''
-    Metodo para converter o tempo de segundos para minutos ou horas, se necessario.
+    Metodo para converter o tempo de segundos para formato de tempo.
     :param t: Tempo em segundos
-    :return: (String) Tempo em segundos, minutos ou horas
+    :return: (String) Tempo em horas, minutos e/ou segundos
     '''
-
-    t = float(t)
-    novoTempo = 0
-
-    if (t > 3600):
-        novoTempo = t / 3600
-        strTempo = "%.2f h" % novoTempo
-
-    elif (t > 60 and t < 3600):
-        novoTempo = t / 60
-        strTempo = "%.2f min" % novoTempo
-
+    if t < 1:
+        return "%.4f s" % t
     else:
-        novoTempo = t
-        strTempo = "%.2f s" % novoTempo
-
-    return strTempo
+        return str(time.strftime("%H:%M:%S", time.gmtime(t)))
 
 
 
@@ -326,6 +313,7 @@ def gravaResultado():
             print >> file, medias[i]
             print >> file, ""
 
+        print >> file, "\n\nTEMPO DE EXECUCAO DO PROGRAMA: %s" % tempoTotal
 
         file.close()
 
@@ -716,13 +704,12 @@ for j in range(0, R):
 
 # Encerra marcacao de tempo do programa
 fimTotal = time.time()
-tempoTotal = fimTotal - inicioTotal
+tempoTotal = conversorTempo( fimTotal-inicioTotal )
 
 # Calcula resultados, grava em arquivo e imprime o resumo
 calculaMedias()
 gravaResultado()
 printResumo(True, True)
 
-tempo = conversorTempo(tempoTotal)
 print "\n\nPrograma finalizado com sucesso!"
-print "\n\nTEMPO DE EXECUCAO DO PROGRAMA: %s" % tempo
+print "\n\nTEMPO DE EXECUCAO DO PROGRAMA: %s" % tempoTotal
