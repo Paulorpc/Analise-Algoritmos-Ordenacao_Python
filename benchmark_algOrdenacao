@@ -15,6 +15,8 @@ __status__ = "Production"
 #######################################################################################################################
 ###   SERA CRIADO DOIS ARQUIVOS NA RAIZ DO DIRETORIO UM ARQUIVO CONTEM OS RESULTADOS OBTIDOS E O OUTRO CONTEM       ###
 ###   AS CONFIGURACOES E VETORES GERADOS PARA EXECUTAR O TESTE NOVAMENTE, MANTENDO AS MESMAS CONDICOES ANTERIORES   ###
+###                                                                                                                 ###
+###                       CONFIGURE O VETOR 'N'(linha 31) E A VARIAVEL 'PARADABUBLLE'(linha 38)                     ###                                                          
 #######################################################################################################################
 
 
@@ -30,9 +32,9 @@ T = len(N)                                                               #tamanh
 R = 0                                                                    #Numero de repeticoes dos teste para calcular uma media de tempos
 
 # Devido a lentidao do algoritmo bubble para grandes vetores, e bom estabelecer uma parada, ou seja nao sera executado
-# o bubblesort para 'N[i] > paradaBubble'
+# o bubblesort para 'N[i] >= paradaBubble'
 # Um vetor de 400.000 itens num i3 c/ 4GB RAM pode demorar em torno de 12h para ordenacao.
-paradaBubble = 200000
+paradaBubble = 10000
 
 
 ############## CONDICAO PARA DEBBUG ####################
@@ -41,7 +43,7 @@ DEBUG = False
 
 if DEBUG is True:
     N = [5, 15, 20, 25, 30, 35, 150, 200]
-    paradaBubble = 140
+    paradaBubble = 150
 
 ############## CONDICAO PARA DEBBUG ####################
 
@@ -209,7 +211,7 @@ def conversorTempo(t):
     '''
     Metodo para converter o tempo de segundos para formato de tempo.
     :param t: Tempo em segundos
-    :return: (String) Tempo em horas, minutos e/ou segundos
+    :return: (String) Tempo em horas, minutos e segundos
     '''
     if t < 1:
         return "%.4f s" % t
@@ -275,8 +277,9 @@ def printResumo(boolPrintTempos, boolPrintMedias):
 
     print "\n\n>> Numero de Repeticoes: \t\t\t" + str(R)
     print ">> Qtde de Itens do vetor N[" + str(len(N)) + "]: \t" + str(N)
-    print ">> Tipo do vetor para Ordenacao: \t" + str(nomes_tipoOp[tipoOp-1])
-    print ">> Algoritmos Selecionados: \t\t" + str(exec_alg)
+    print ">> Tipo do vetor para ordenacao: \t" + str(nomes_tipoOp[tipoOp-1])
+    print ">> Algoritmos selecionados: \t\t(" + str(exec_alg) + ") " + str(nomes_alg)
+    print ">> Parada Bubble: \t\t\t\t\t(" + str(paradaBubble) + ")"
 
 
 
@@ -288,9 +291,18 @@ def gravaResultado():
     medias = [medias_bubble, medias_heap, medias_quick,medias_radix]
 
     try:
-        if tipoOp == 1:   fileName = "log_Resultados_aleatorio_" + dataHora() + ".txt"
-        elif tipoOp == 2: fileName = "log_Resultados_ordenado_" + dataHora() + ".txt"
-        elif tipoOp == 3: fileName = "log_Resultados_inverso_" + dataHora() + ".txt"
+
+        apenasBubble = ""
+
+        # verifica se apenas o bubble sera executado
+        if ( exec_alg[0] == True  and
+             exec_alg[1] == False and
+             exec_alg[2] == False and
+             exec_alg[3] == False ): apenasBubble = "apenasBubble_"
+
+        if tipoOp == 1:   fileName = "log_Resultados_aleatorio_" + apenasBubble + dataHora() + ".txt"
+        elif tipoOp == 2: fileName = "log_Resultados_ordenado_" + apenasBubble + dataHora() + ".txt"
+        elif tipoOp == 3: fileName = "log_Resultados_inverso_" + apenasBubble + dataHora() + ".txt"
 
         file = open(fileName, "w")
 
@@ -305,6 +317,8 @@ def gravaResultado():
         print >> file, "\n\n>> Qtde de Repeticoes: \t\t(" + str(R) + ")"
         print >> file, ">> Tipo de vetor ordenado: \t(" + str(tipoOp) + ") " + nomes_tipoOp[tipoOp-1]
         print >> file, ">> Qtde Itens para Ordenacao: \tN[" + str(T) + "] = \t" + str(N)
+        print >> file, ">> Algoritmos Executados: \t(" + str(exec_alg) + ") " + str(nomes_alg)
+        print >> file, ">> Parada Bubble: \t\t(" + str(paradaBubble) + ")"
 
         print >> file, "\n\n--------------------------------------------------------------------------\n\n"
 
@@ -321,56 +335,27 @@ def gravaResultado():
 
 
 
-def gravaArquivoVetores(vetores):
-    '''
-    Metodo para armazenar todos os tipos de vetores gerados em um arquivo para reuso em novos testes
-    Dependendo do tamanho dos vetores gerados, este arquivo pode ficar muito grande. Ver metodo 'gravaVetor()'
-    :param vetores: Vetor com todos os demais vetores gerados
-    '''
-
-    try:
-        fileName = "vetoresGerados_todos_" + dataHora() + ".txt"
-        file = open(fileName, "w")
-
-    except IOError:
-        print "\n\nATENCAO: "
-        print "\nNao foi possivel criar o arquivo de vetores/configuracao: ", filename
-        print "Isto significa que nao sera possivel reusar os vetores e as configuracoes desta analise em um novo teste"
-
-    else:
-        print >> file, "**************************************************************************"
-        print >> file, "*************  VETORES GERADOS PARA RECUPERACAO E ORDENACAO  *************"
-        print >> file, "**************************************************************************"
-        print >> file, "\n\n>> Qtde de Repeticoes \t\t(" + str(R) + ")"
-        print >> file, ">> Algoritmos Executados: \t(" + str(exec_alg) + ") " + str(nomes_alg)
-
-        for j in range ( len(vetores) ):
-            print >> file, "\n\n--------------------------------------------------------------------------"
-            print >> file, ">> Tipo de vetor: " + "(" + str(j+1) + ")" + nomes_tipoOp[j]
-            print >> file, "--------------------------------------------------------------------------"
-
-            for i in range ( len(vetores[j]) ):
-                print >> file, "\n>> N[" + str(i) + "] = (" + str(N[i]) + ")"
-                print >> file, ">> " + str((vetores[j])[i])
-
-        file.close()
-
-        print "\n** Arquivo gravado com sucesso: %s **" % fileName
-
-
-
-def gravaArquivoVetor(vetores):
+def gravaArquivoVetor(vetor):
     '''
     Metodo para armazenar o tipo de vetor (operacao) escolhido pelo usuario em um arquivo para reuso em novos testes
-    :param vetores: Vetor com todos os demais vetores gerados
+    :param vetor: Vetor com todos os demais vetores gerados
     '''
 
     global continue_prg
 
     try:
-        if tipoOp == 1:   fileName = "vetoresGerados_aleatorio_" + dataHora() + ".txt"
-        elif tipoOp == 2: fileName = "vetoresGerados_ordenado_" + dataHora() + ".txt"
-        elif tipoOp == 3: fileName = "vetoresGerados_inverso_" + dataHora() + ".txt"
+
+        apenasBubble = ""
+
+        # verifica se apenas o bubble sera executado
+        if (exec_alg[0] == True and
+            exec_alg[1] == False and
+            exec_alg[2] == False and
+            exec_alg[3] == False): apenasBubble = "apenasBubble_"
+
+        if tipoOp == 1:   fileName = "vetoresGerados_aleatorio_" + apenasBubble + dataHora() + ".txt"
+        elif tipoOp == 2: fileName = "vetoresGerados_ordenado_" + apenasBubble + dataHora() + ".txt"
+        elif tipoOp == 3: fileName = "vetoresGerados_inverso_" + apenasBubble + dataHora() + ".txt"
 
         file = open(fileName, "w")
 
@@ -385,19 +370,20 @@ def gravaArquivoVetor(vetores):
         print >> file, "**************************************************************************"
 
         print >> file, "\n\n>> Qtde de Repeticoes: \t\t(" + str(R) + ")"
-        print >> file, ">> Tipo de vetor: \t\t(" + str(tipoOp)  + ") " + nomes_tipoOp[tipoOp-1]
+        print >> file, ">> Tipo de vetor ordenado: \t(" + str(tipoOp) + ") " + nomes_tipoOp[tipoOp - 1]
+        print >> file, ">> Qtde Itens para Ordenacao: \tN[" + str(T) + "] = \t" + str(N)
         print >> file, ">> Algoritmos Executados: \t(" + str(exec_alg) + ") " + str(nomes_alg)
+        print >> file, ">> Parada Bubble: \t\t(" + str(paradaBubble) + ")"
 
         print >> file, "\n\n--------------------------------------------------------------------------\n"
 
-        for i in range(len(vetores[tipoOp-1])):
+        for i in range(len(vetor)):
             print >> file, "\n>> N[" + str(i) + "] = (" + str(N[i]) + ")"
-            print >> file, ">> " + str((vetores[tipoOp-1])[i])
+            print >> file, ">> " + str(vetor[i])
 
         file.close()
 
         print "\n** Arquivo gravado com sucesso: %s **" % fileName
-
 
 
 
@@ -413,25 +399,43 @@ def carregaConfiguracaoManual():
     # Escolha de quais algoritipos deseja analisar
     print ""
     for i in range(0, len(nomes_alg)):
-        aux = raw_input("Executar o " + nomes_alg[i].upper() + "? [S]im ou [N]ao: ")
-        if (aux == "s" or aux == "S"):
+
+        sair = False
+        while not sair:
+            aux = raw_input("Executar o " + nomes_alg[i].upper() + "? [S]im ou [N]ao: ").upper()
+
+            if (aux == "S" or aux == "N"):
+                sair = True
+            else:
+                print ""
+
+        if (aux == "S"):
             exec_alg[i] = True
             continue_prg = True
 
-    # Define o numero de repeticoes do teste para realizar uma media
+
+    print ""
     while R < 1:
-        R = int(raw_input("\nQuantas vezes deseja repetir o teste?: "))
+        try:
+            R = int(raw_input("Quantas vezes deseja repetir o teste?: "))
+        except ValueError:
+            pass
+
 
     # Define com qual tipo de vetor sera realizado o teste (Aleatorio, Ordenado (Melhor Caso), Invertido (Pior Caso)
     # Nao fazemos os 3 em sequencia automaticamente devido ao tempo de espera ser grande, principalmente executando o
     # algoritmo bubblesort.
+    print ("\nTipo de Operacao:\n"
+             "[1] " + nomes_tipoOp[0] + "\n"
+             "[2] " + nomes_tipoOp[1] + "\n"
+             "[3] " + nomes_tipoOp[2] + "\n")
+
     tipoOp = 0
     while tipoOp < 1 or tipoOp > 3:
-        tipoOp = int(raw_input("\nTipo de Operacao:\n"
-                               "[1] " + nomes_tipoOp[0] + "\n"
-                               "[2] " + nomes_tipoOp[1] + "\n"
-                               "[3] " + nomes_tipoOp[2] + "\n"
-                               "\nDigite o numero do item da operacao: "))
+        try:
+            tipoOp = int(raw_input("Digite o numero da operacao: "))
+        except ValueError:
+            pass
 
     return R, tipoOp
 
@@ -441,7 +445,7 @@ def carregaArquivoConfiguracao():
     '''
     Metodo para carregar as informacoes do arquivo de log gerado pelo programa para poder realizar novos testes
     baseado nos mesmos parametros utilizados anteriormente.
-    :return: R, tipoOp, vetoresCarregados, N
+    :return: R, tipoOp, vetoresCarregados, N, paradaBubble
     '''
 
     global R, T, exec_alg, continue_prg
@@ -465,12 +469,15 @@ def carregaArquivoConfiguracao():
                 if line.startswith('>> Qtde de Repeticoes: '):
                     R = int(re.search(r'\((.*)\)', line).group(1))
 
-                if line.startswith('>> Tipo de vetor: '):
+                if line.startswith('>> Tipo de vetor ordenado: '):
                     tipoOp = int(re.search(r'\((.*)\)', line[:39]).group(1))
 
                 if line.startswith('>> Algoritmos Executados: '):
                     algs = re.search(r'\((.*)\)', line).group(1)
                     algs = algs[1:-1].split(', ')
+
+                if line.startswith('>> Parada Bubble: '):
+                    paradaBubble = int(re.search(r'\((.*)\)', line).group(1))
 
                 if line.startswith('>> N['):
                     N.append( int(re.search(r'\((.*)\)', line).group(1)) )
@@ -495,7 +502,7 @@ def carregaArquivoConfiguracao():
         #print qtde_N
         #print vetores
 
-        return R, tipoOp, vetoresCarregados, N
+        return R, tipoOp, vetoresCarregados, N, paradaBubble
 
 
 
@@ -507,36 +514,31 @@ def geraVetores(vetor, tipoOp):
     '''
 
     T = len(vetor)
-    vetorAleatorio, vetorMelhorCaso, vetorPiorCaso = [], [], []
+    vetorGerado = []
 
     for i in range(0, T):
 
-        vetorAleatorio.append([])
-        vetorMelhorCaso.append([])
-        vetorPiorCaso.append([])
+        vetorGerado.append([])
 
         #Aleatorio
-        for x in range(0, N[i]):
-            vetorAleatorio[i].append(random.randint(0, N[i]))
+        if tipoOp == 1:
+            for x in range(0, N[i]):
+                vetorGerado[i].append(random.randint(0, N[i]))
 
-        #Melhor caso
-        for x in range(0, N[i]):
-            vetorMelhorCaso[i].append(x)
+        # Melhor caso
+        elif tipoOp == 2:
+            for x in range(0, N[i]):
+                vetorGerado[i].append(x)
 
         #Pior caso
-        for x in range(N[i]-1, -1, -1):
-            vetorPiorCaso[i].append(x)
+        elif tipoOp == 3:
+            for x in range(N[i]-1, -1, -1):
+                vetorGerado[i].append(x)
 
+    gravaArquivoVetor(vetorGerado)
 
-    vetores = [vetorAleatorio, vetorMelhorCaso, vetorPiorCaso]
-    gravaArquivoVetor(vetores)
-    #gravaArquivoVetores(vetores)
+    return vetorGerado
 
-    if   tipoOp == 1: return vetores[0]
-    elif tipoOp == 2: return vetores[1]
-    elif tipoOp == 3: return vetores[2]
-    else:
-        return []
 
 
 
@@ -603,14 +605,16 @@ print "*************************************************************************
 # Define com qual tipo de vetor sera realizado o teste (Aleatorio, Ordenado (Melhor Caso), Invertido (Pior Caso)
 # Nao fazemos os 3 em sequencia automaticamente devido ao tempo de espera ser grande, principalmente executando o
 # algoritmo bubblesort.
+print ("\n[1] Nova Analise\n"
+       "[2] Gerar arquivo de vetores/configuracao\n"
+       "[3] Carregar configuracao do arquivo (Continuar analise)\n")
 
 tipoanalise = 0
 while tipoanalise < 1 or tipoanalise > 3:
-    tipoanalise = int(raw_input("\n[1] Nova Analise\n"
-                                  "[2] Gerar arquivo de vetores/configuracao\n"
-                                  "[3] Carregar configuracao do arquivo (Continuar analise) \n"
-
-                                  "\nDigite o numero do item da operacao: "))
+    try:
+        tipoanalise = int(raw_input("Digite o numero da operacao: "))
+    except ValueError:
+        pass
 
 
 if tipoanalise == 1 or tipoanalise == 2:
@@ -621,14 +625,30 @@ if tipoanalise == 1 or tipoanalise == 2:
         continue_prg = False
 
 elif tipoanalise == 3:
-    R, tipoOp, vetores, N = carregaArquivoConfiguracao()
+    R, tipoOp, vetores, N, paradaBubble = carregaArquivoConfiguracao()
 
 
-# Finaliza o programa caso nao tenha sido escolhido algum algoritmo
-if (continue_prg == False): raise SystemExit
+
+# Finaliza o programa caso nao tenha sido escolhido algum algoritmo ou printa resumo e pausa programa
+if (continue_prg == True):
+
+    printResumo(False, False)
+    print ""
+
+    sair = False
+    while not sair:
+        aux = raw_input("Pressione [C]ontinuar ou [S]air: ").upper()
+
+        if (aux == "C" or aux == "S"):
+            sair = True
+
+    if (aux == "S"):
+        continue_prg = False
 
 
-printResumo(False, False)
+if (continue_prg == False):
+    raise SystemExit
+
 
 #Garante que o numero de Repeticao nao e menor ou igual a 0 (por engano)
 if R <= 0:
