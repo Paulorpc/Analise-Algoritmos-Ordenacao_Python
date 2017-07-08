@@ -685,7 +685,7 @@ while tipoanalise < 1 or tipoanalise > 3:
 if tipoanalise == 1 or tipoanalise == 2:
 
     R, tipoOp = carregaConfiguracaoManual()
-    geraVetores(N, tipoOp)
+    vetores = geraVetores(N, tipoOp)
 
     if tipoanalise == 2:
         continue_prg = False
